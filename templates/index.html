@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhaseForge — BASIC Language Compiler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/static/img/favicon-192.png" />
+  <meta name="theme-color" content="#4f46e5" />
+</head>
+
+<body>
+
+  <!-- ══════════════ NAV ══════════════ -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">
+        <span class="brand-icon">⬡</span>
+        <span class="brand-name">PhaseForge</span>
+      </a>
+      <div class="nav-links">
+        <a href="#playground" class="nav-link">Playground</a>
+        <a href="#phases" class="nav-link">Phases</a>
+        <a href="#reference" class="nav-link">Reference</a>
+      </div>
+      <button class="nav-mobile-toggle" id="mobileToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ══════════════ HERO ══════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="hero-grid"></div>
+      <div class="hero-blob blob1"></div>
+      <div class="hero-blob blob2"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Compiler Design · Minia University 2025–2026
+      </div>
+      <h1 class="hero-title">
+        Compile.<br /><em>Visualize.</em><br />Understand.
+      </h1>
+      <p class="hero-sub">
+        PhaseForge walks every expression through all compiler phases —
+        lexical analysis, tokenization, parsing, AST construction, and
+        interpretation — with live interactive visualizations.
+      </p>
+      <div class="hero-ctas">
+        <a href="#playground" class="btn btn-primary">Try It Now</a>
+        <a href="#phases" class="btn btn-ghost">Explore Phases →</a>
+      </div>
+      <div class="hero-examples">
+        <span class="example-label">Try:</span>
+        <button class="example-chip" data-expr="2 + 3 * 4">2 + 3 * 4</button>
+        <button class="example-chip" data-expr="sin(PI / 2)">sin(PI / 2)</button>
+        <button class="example-chip" data-expr="VAR x = 10">VAR x = 10</button>
+        <button class="example-chip" data-expr="12 ; 8">12 ; 8 (GCD)</button>
+        <button class="example-chip" data-expr="5 ** 2 + 3!">5 ** 2 + 3!</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ PHASES STRIP ══════════════ -->
+  <section class="phases-strip" id="phases">
+    <div class="phases-inner">
+      <div class="phases-header">
+        <h2 class="section-title">Compiler Phases</h2>
+        <p class="section-sub">Every expression passes through all five stages</p>
+      </div>
+      <div class="phases-flow">
+        <div class="phase-card" data-phase="1">
+          <div class="phase-num">01</div>
+          <div class="phase-icon">◈</div>
+          <h3>Lexical Analysis</h3>
+          <p>Source text is scanned character by character. The lexer identifies and classifies every token.</p>
+        </div>
+        <div class="phase-arrow">→</div>
+        <div class="phase-card" data-phase="2">
+          <div class="phase-num">02</div>
+          <div class="phase-icon">◉</div>
+          <h3>Tokenization</h3>
+          <p>Characters are grouped into typed tokens: literals, operators, identifiers, keywords, and functions.</p>
+        </div>
+        <div class="phase-arrow">→</div>
+        <div class="phase-card" data-phase="3">
+          <div class="phase-num">03</div>
+          <div class="phase-icon">◍</div>
+          <h3>Parsing</h3>
+          <p>Tokens are analyzed against the grammar rules using recursive descent parsing.</p>
+        </div>
+        <div class="phase-arrow">→</div>
+        <div class="phase-card" data-phase="4">
+          <div class="phase-num">04</div>
+          <div class="phase-icon">◎</div>
+          <h3>AST Construction</h3>
+          <p>A typed Abstract Syntax Tree is built, capturing operator precedence and structure.</p>
+        </div>
+        <div class="phase-arrow">→</div>
+        <div class="phase-card" data-phase="5">
+          <div class="phase-num">05</div>
+          <div class="phase-icon">●</div>
+          <h3>Interpretation</h3>
+          <p>The AST is traversed and evaluated. Variables are stored in a scoped symbol table.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ PLAYGROUND ══════════════ -->
+  <section class="playground" id="playground">
+    <div class="playground-inner">
+      <div class="playground-header">
+        <h2 class="section-title">Live Playground</h2>
+        <p class="section-sub">Write any expression and watch all phases execute in real time</p>
+      </div>
+
+      <div class="editor-area">
+        <!-- Input Panel -->
+        <div class="input-panel">
+          <div class="panel-toolbar">
+            <span class="panel-title">
+              <span class="toolbar-dot dot-red"></span>
+              <span class="toolbar-dot dot-yellow"></span>
+              <span class="toolbar-dot dot-green"></span>
+              Input
+            </span>
+            <div class="toolbar-actions">
+              <button class="toolbar-btn" id="btnReset" title="Reset session">↺ Reset</button>
+              <button class="toolbar-btn" id="btnClear" title="Clear">✕ Clear</button>
+            </div>
+          </div>
+          <div class="code-editor-wrap">
+            <textarea id="codeInput" class="code-editor" spellcheck="false"
+              placeholder="Type an expression… e.g. 2 + 3 * 4"></textarea>
+            <div class="editor-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or click Run</div>
+          </div>
+          <div class="input-footer">
+            <button class="btn btn-run" id="btnRun">
+              <span class="run-icon">▶</span> Run
+            </button>
+            <div class="session-badge">
+              <span class="session-dot"></span>
+              Session active
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="output-panel">
+          <div class="panel-toolbar">
+            <span class="panel-title">
+              <span class="toolbar-dot dot-red"></span>
+              <span class="toolbar-dot dot-yellow"></span>
+              <span class="toolbar-dot dot-green"></span>
+              Output
+            </span>
+          </div>
+          <div id="outputArea" class="output-area">
+            <div class="output-placeholder">
+              <div class="placeholder-icon">⬡</div>
+              <p>Run an expression to see results</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase Tabs -->
+      <div class="phase-tabs-container">
+        <div class="phase-tabs" id="phaseTabs">
+          <button class="phase-tab active" data-tab="tokens">
+            <span class="tab-num">01–02</span>
+            Lexer &amp; Tokens
+          </button>
+          <button class="phase-tab" data-tab="parse-tree">
+            <span class="tab-num">03–04</span>
+            Parse Tree
+          </button>
+          <button class="phase-tab" data-tab="symbol-table">
+            <span class="tab-num">05</span>
+            Symbol Table
+          </button>
+        </div>
+
+        <!-- Token View -->
+        <div class="tab-panel active" id="tab-tokens">
+          <div class="tokens-legend">
+            <span class="legend-item"><span class="lc token-int"></span>Integer</span>
+            <span class="legend-item"><span class="lc token-float"></span>Float</span>
+            <span class="legend-item"><span class="lc token-keyword"></span>Keyword</span>
+            <span class="legend-item"><span class="lc token-identifier"></span>Identifier</span>
+            <span class="legend-item"><span class="lc token-op"></span>Operator</span>
+            <span class="legend-item"><span class="lc token-func"></span>Function</span>
+            <span class="legend-item"><span class="lc token-bitwise"></span>Bitwise</span>
+            <span class="legend-item"><span class="lc token-compare"></span>Compare</span>
+          </div>
+          <div id="tokenStream" class="token-stream">
+            <div class="tab-empty">Run an expression to see tokens</div>
+          </div>
+          <div id="tokenTable" class="token-table-wrap" style="display:none">
+            <table class="token-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Token Type</th>
+                  <th>Value</th>
+                  <th>Position</th>
+                  <th>Category</th>
+                </tr>
+              </thead>
+              <tbody id="tokenTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Parse Tree View -->
+        <div class="tab-panel" id="tab-parse-tree">
+          <div class="tree-controls">
+            <button class="tree-btn" id="btnExpandAll">Expand All</button>
+            <button class="tree-btn" id="btnCollapseAll">Collapse All</button>
+            <button class="tree-btn" id="btnCenter">Center</button>
+          </div>
+          <div id="treeContainer" class="tree-container">
+            <div class="tab-empty">Run an expression to see the parse tree</div>
+          </div>
+          <div id="nodeTooltip" class="node-tooltip" style="display:none"></div>
+        </div>
+
+        <!-- Symbol Table View -->
+        <div class="tab-panel" id="tab-symbol-table">
+          <div id="symbolTableArea" class="symbol-table-area">
+            <div class="tab-empty">Assign a variable (e.g. <code>VAR x = 10</code>) to see the symbol table</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ REFERENCE ══════════════ -->
+  <section class="reference" id="reference">
+    <div class="reference-inner">
+      <div class="reference-header">
+        <h2 class="section-title">Language Reference</h2>
+        <p class="section-sub">Complete operator and function guide</p>
+      </div>
+      <div class="ref-grid">
+        <div class="ref-card">
+          <h3 class="ref-card-title">⊕ Arithmetic</h3>
+          <div class="ref-table">
+            <div class="ref-row"><code>+</code><span>Addition</span><code>2 + 3</code></div>
+            <div class="ref-row"><code>-</code><span>Subtraction</span><code>5 - 2</code></div>
+            <div class="ref-row"><code>*</code><span>Multiply</span><code>3 * 4</code></div>
+            <div class="ref-row"><code>/</code><span>Divide</span><code>10 / 4</code></div>
+            <div class="ref-row"><code>**</code><span>Power</span><code>2 ** 8</code></div>
+            <div class="ref-row"><code>%</code><span>Modulo</span><code>10 % 3</code></div>
+            <div class="ref-row"><code>\</code><span>Floor div</span><code>10 \ 3</code></div>
+            <div class="ref-row"><code>$</code><span>Nth root</span><code>2 $ 16</code></div>
+            <div class="ref-row"><code>!</code><span>Factorial</span><code>5!</code></div>
+          </div>
+        </div>
+        <div class="ref-card">
+          <h3 class="ref-card-title">⊗ Bitwise</h3>
+          <div class="ref-table">
+            <div class="ref-row"><code>&amp;</code><span>AND</span><code>5 &amp; 3</code></div>
+            <div class="ref-row"><code>|</code><span>OR</span><code>5 | 3</code></div>
+            <div class="ref-row"><code>^</code><span>XOR</span><code>5 ^ 3</code></div>
+            <div class="ref-row"><code>"</code><span>XNOR</span><code>5 " 3</code></div>
+            <div class="ref-row"><code>~</code><span>NOT</span><code>~5</code></div>
+            <div class="ref-row"><code>&lt;&lt;</code><span>Left shift</span><code>5 &lt;&lt; 2</code></div>
+            <div class="ref-row"><code>&gt;&gt;</code><span>Right shift</span><code>16 &gt;&gt; 2</code></div>
+            <div class="ref-row"><code>&gt;&gt;&gt;</code><span>Unsigned RS</span><code>16 &gt;&gt;&gt; 2</code></div>
+          </div>
+        </div>
+        <div class="ref-card">
+          <h3 class="ref-card-title">≟ Comparison</h3>
+          <div class="ref-table">
+            <div class="ref-row"><code>#</code><span>Equal</span><code>5 # 5 → 1</code></div>
+            <div class="ref-row"><code>@</code><span>Not equal</span><code>5 @ 3 → 1</code></div>
+            <div class="ref-row"><code>&gt;</code><span>Greater</span><code>5 &gt; 3 → 1</code></div>
+            <div class="ref-row"><code>&lt;</code><span>Less</span><code>3 &lt; 5 → 1</code></div>
+            <div class="ref-row"><code>}</code><span>Greater/eq</span><code>5 } 5 → 1</code></div>
+            <div class="ref-row"><code>{</code><span>Less/eq</span><code>5 { 5 → 1</code></div>
+            <div class="ref-row"><code>;</code><span>GCD</span><code>12 ; 8 → 4</code></div>
+            <div class="ref-row"><code>:</code><span>LCM</span><code>12 : 8 → 24</code></div>
+            <div class="ref-row"><code>?</code><span>Compare</span><code>5 ? 3</code></div>
+          </div>
+        </div>
+        <div class="ref-card">
+          <h3 class="ref-card-title">∫ Functions</h3>
+          <div class="ref-table">
+            <div class="ref-row"><code>sin / cos / tan</code><span>Trig (rad)</span></div>
+            <div class="ref-row"><code>sind / cosd / tand</code><span>Trig (deg)</span></div>
+            <div class="ref-row"><code>asin / acos / atan</code><span>Inv. trig (rad)</span></div>
+            <div class="ref-row"><code>asind / acosd / atand</code><span>Inv. trig (deg)</span></div>
+            <div class="ref-row"><code>sinh / cosh / tanh</code><span>Hyperbolic</span></div>
+            <div class="ref-row"><code>exp(x)</code><span>e^x</span></div>
+            <div class="ref-row"><code>ln(x)</code><span>Natural log</span></div>
+            <div class="ref-row"><code>log(x)</code><span>Log base 10</span></div>
+          </div>
+        </div>
+        <div class="ref-card">
+          <h3 class="ref-card-title">π Constants</h3>
+          <div class="ref-table">
+            <div class="ref-row"><code>PI</code><span>3.14159…</span></div>
+            <div class="ref-row"><code>E</code><span>2.71828…</span></div>
+            <div class="ref-row"><code>TAU</code><span>6.28318… (2π)</span></div>
+            <div class="ref-row"><code>INF</code><span>Infinity</span></div>
+            <div class="ref-row"><code>NAN</code><span>Not a Number</span></div>
+            <div class="ref-row"><code>null</code><span>0</span></div>
+          </div>
+        </div>
+        <div class="ref-card">
+          <h3 class="ref-card-title">x Variables</h3>
+          <div class="ref-table">
+            <div class="ref-row"><code>VAR x = 10</code><span>Declare</span></div>
+            <div class="ref-row"><code>x * 2</code><span>Use</span></div>
+            <div class="ref-row"><code>VAR y = x + 5</code><span>Use in expr</span></div>
+            <div class="ref-row"><code>VAR z = sin(x)</code><span>With function</span></div>
+          </div>
+          <div class="ref-note">Variables persist across expressions in the same session.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ TEAM FOOTER ══════════════ -->
+  <footer class="site-footer-wrap">
+    <div class="team-strip">
+      <div class="team-strip-inner">
+        <div class="team-strip-header">
+          <span class="team-strip-title">Done by</span>
+          <span class="team-strip-uni">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2L2 7v2h16V7L10 2z" fill="var(--blue-400)" />
+              <rect x="3" y="9" width="3" height="7" rx="1" fill="var(--blue-200)" />
+              <rect x="8.5" y="9" width="3" height="7" rx="1" fill="var(--blue-200)" />
+              <rect x="14" y="9" width="3" height="7" rx="1" fill="var(--blue-200)" />
+              <rect x="1" y="16" width="18" height="2" rx="1" fill="var(--blue-400)" />
+            </svg>
+            <strong>Minia University</strong> · Faculty of Computers &amp; Information
+          </span>
+        </div>
+
+        <div class="supervision-mini">
+          <div class="supervisor-mini">
+            <div class="supervisor-mini-avatar">M</div>
+            <div>
+              <div class="supervisor-mini-role">Instructor</div>
+              <div class="supervisor-mini-name">Dr. Moussa Alkhedr</div>
+            </div>
+          </div>
+          <div class="supervisor-mini">
+            <div class="supervisor-mini-avatar">M</div>
+            <div>
+              <div class="supervisor-mini-role">Teaching Assistant</div>
+              <div class="supervisor-mini-name">Eng. Mina Essam</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="members-row">
+          <a class="member-mini" href="https://www.linkedin.com/in/mohamed-sayed-60ba8b264" target="_blank"
+            rel="noopener" title="Mohamed Sayed Saad — LinkedIn">
+            <div class="member-photo-wrap">
+              <img src="/static/img/team/mohamed_sayed.jpeg" alt="Mohamed Sayed"
+                onerror="this.style.display='none';this.parentNode.querySelector('.member-initial').style.display='flex'" />
+              <span class="member-initial" style="display:none">M</span>
+            </div>
+            <div class="member-mini-name">Mohamed Sayed</div>
+          </a>
+          <a class="member-mini" href="https://www.linkedin.com/in/ammar-yasser-83537a267" target="_blank"
+            rel="noopener" title="Ammar Yasser — LinkedIn">
+            <div class="member-photo-wrap" style="background:linear-gradient(135deg,var(--teal-600),var(--teal-400))">
+              <img src="/static/img/team/ammar_yasser.jpg" alt="Ammar Yasser"
+                onerror="this.style.display='none';this.parentNode.querySelector('.member-initial').style.display='flex'" />
+              <span class="member-initial" style="display:none">A</span>
+            </div>
+            <div class="member-mini-name">Ammar Yasser</div>
+          </a>
+          <a class="member-mini" href="https://www.linkedin.com/in/beshoy-farouk" target="_blank" rel="noopener"
+            title="Beshoy Farouk — LinkedIn">
+            <div class="member-photo-wrap" style="background:linear-gradient(135deg,var(--purple-600),#6c63ff)">
+              <img src="/static/img/team/beshoy_farouk.jpg" alt="Beshoy Farouk"
+                onerror="this.style.display='none';this.parentNode.querySelector('.member-initial').style.display='flex'" />
+              <span class="member-initial" style="display:none">B</span>
+            </div>
+            <div class="member-mini-name">Beshoy Farouk</div>
+          </a>
+          <a class="member-mini" href="https://www.linkedin.com/in/hussien-mohammed-426947257" target="_blank"
+            rel="noopener" title="Hussien Mohamed — LinkedIn">
+            <div class="member-photo-wrap" style="background:linear-gradient(135deg,var(--amber-600),#f59e0b)">
+              <img src="/static/img/team/hussien_mohamed.png" alt="Hussien Mohamed"
+                onerror="this.style.display='none';this.parentNode.querySelector('.member-initial').style.display='flex'" />
+              <span class="member-initial" style="display:none">H</span>
+            </div>
+            <div class="member-mini-name">Hussien Mohamed</div>
+          </a>
+          <a class="member-mini" href="https://www.linkedin.com/in/michael-hany-572034262" target="_blank"
+            rel="noopener" title="Michael Hany — LinkedIn">
+            <div class="member-photo-wrap" style="background:linear-gradient(135deg,var(--red-600),#ef4444)">
+              <img src="/static/img/team/michael_hany.png" alt="Michael Hany"
+                onerror="this.style.display='none';this.parentNode.querySelector('.member-initial').style.display='flex'" />
+              <span class="member-initial" style="display:none">M</span>
+            </div>
+            <div class="member-mini-name">Michael Hany</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="site-footer">
+      <span class="footer-brand">PhaseForge</span>
+      <span class="footer-sep">·</span>
+      <span>Lexer &nbsp;·&nbsp; Parser &nbsp;·&nbsp; AST &nbsp;·&nbsp; Interpreter &nbsp;·&nbsp; Symbol Table</span>
+      <span class="footer-sep">·</span>
+      <span>Minia University · Compiler Design 2025–2026</span>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+</body>
+
+</html>
