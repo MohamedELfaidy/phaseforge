@@ -13,7 +13,7 @@ A full-stack Flask web application that walks every expression through all five 
 
 ---
 
-## Access the application from ![here](phaseforge.dpdns.org)
+## Access the application from [here](https://phaseforge.dpdns.org)
 
 ---
 ## ✨ Features
