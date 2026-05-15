@@ -309,6 +309,54 @@ def api_suggest():
         return jsonify({'suggestion': None, 'explanation': str(ex)})
 
 
+@app.route('/api/explain', methods=['POST'])
+def api_explain():
+    """Call Groq LLM to explain a successful expression."""
+    data   = request.get_json()
+    code   = data.get('code', '').strip()
+    result = data.get('result', '')
+
+    if not code:
+        return jsonify({'explanation': None})
+
+    prompt = (
+        f"You are an expert in the PhaseForge BASIC language compiler.\n"
+        f"The user entered this expression:\n  {code}\n"
+        f"The result was:\n  {result}\n\n"
+        f"Language rules:\n"
+        f"- Arithmetic: + - * / ** % \\\\ $ (nth root) ! (factorial)\n"
+        f"- Functions: sin cos tan asin acos atan sind cosd tand asind acosd atand sinh cosh tanh exp ln log\n"
+        f"- Bitwise: & | ~ ^ \" << >> >>>\n"
+        f"- Comparison & Math: # (equal) @ (not equal) > < }} (>=) {{ (<=) ; (GCD) : (LCM) ? (compare)\n"
+        f"- Variables: VAR name = expr\n"
+        f"- Constants: PI E TAU INF NAN null\n\n"
+        f"Explain how this expression was evaluated in one or two short sentences. "
+        f"Briefly define the mathematical operation used if it is not a basic one (e.g., if ';' is used, explain it finds the largest positive integer that divides each of the integers). "
+        f"Keep it professional, educational, and concise."
+    )
+
+    try:
+        resp = req_lib.post(
+            GROQ_ENDPOINT,
+            headers={
+                'Authorization': f'Bearer {GROQ_API_KEY}',
+                'Content-Type':  'application/json',
+            },
+            json={
+                'model':       GROQ_MODEL,
+                'messages':    [{'role': 'user', 'content': prompt}],
+                'temperature': 0.3,
+                'max_tokens':  150,
+            },
+            timeout=8,
+        )
+        resp.raise_for_status()
+        explanation = resp.json()['choices'][0]['message']['content'].strip()
+        return jsonify({'explanation': explanation})
+    except Exception as ex:
+        return jsonify({'explanation': None, 'error': str(ex)})
+
+
 @app.route('/api/tokenize', methods=['POST'])
 def api_tokenize():
     data = request.get_json()

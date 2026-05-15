@@ -7,3 +7,4 @@ venv/
 *.pyd
 deploy.sh
 scratch/
+sessions/

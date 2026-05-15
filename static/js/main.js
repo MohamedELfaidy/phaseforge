@@ -123,6 +123,8 @@ function handleResult(data, code) {
     if (vm) state.symbolTable[vm[1]] = data.result;
     renderSymbolTable();
     hideAISuggestion();
+    // Fetch AI explanation for the success
+    fetchAIExplanation(code, data.result);
   } else {
     state.lastError = data.error_details || data.error || '';
     showOutput('error', data.error_name || 'Error', state.lastError);
@@ -137,6 +139,7 @@ function showOutput(type, label, msg) {
       <div class="output-result animate-in">
         <div class="result-label">${esc(label)}</div>
         <div class="result-value">${esc(String(msg))}</div>
+        <div id="aiExplanation" class="ai-explanation-mini" style="display:none"></div>
       </div>`;
   } else {
     outputArea.innerHTML = `
@@ -177,6 +180,29 @@ async function fetchAISuggestion(code, error) {
     }
   } catch(e) {
     hideAISuggestion();
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// AI EXPLANATION (Success Case)
+// ──────────────────────────────────────────────────────
+async function fetchAIExplanation(code, result) {
+  const container = document.getElementById('aiExplanation');
+  if (!container) return;
+
+  try {
+    const res  = await fetch('/api/explain', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({code, result}),
+    });
+    const data = await res.json();
+    if (data.explanation) {
+      container.innerHTML = `<span class="ai-sparkle">✦</span> ${esc(data.explanation)}`;
+      container.style.display = 'block';
+    }
+  } catch(e) {
+    console.error("AI Explanation failed", e);
   }
 }
 

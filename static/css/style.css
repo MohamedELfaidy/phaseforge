@@ -1502,3 +1502,20 @@ body {
     transform: scale(1);
   }
 }
+
+/* AI Explanation */
+.ai-explanation-mini {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--blue-100);
+  color: var(--gray-600);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  font-family: var(--font-sans);
+  animation: fadeIn 0.5s ease forwards;
+}
+.ai-sparkle {
+  color: var(--accent);
+  font-weight: bold;
+  margin-right: 0.25rem;
+}
