@@ -9,14 +9,19 @@ A full-stack Flask web application that walks every expression through all five 
 **University:** Minia University · Faculty of Computers & Information  
 **Course:** Compiler Design 2025–2026  
 **Instructor:** Dr. Moussa Elkedr  
-**Teaching Assistant:** Eng. Mina Essam  
+**Teaching Assistant:** Eng. Mina Essam
 
 ---
 
+## Access the application from [here](phaseforge.dpdns.org)
+
+---
 ## ✨ Features
 
 ### 🔬 Five Live Compiler Phases
+
 Every expression is processed visibly through:
+
 1. **Lexical Analysis** — character-by-character source scanning
 2. **Tokenization** — colour-coded token stream with a detailed breakdown table
 3. **Parsing** — recursive-descent grammar analysis
@@ -24,6 +29,7 @@ Every expression is processed visibly through:
 5. **Interpretation** — full evaluation with a scoped symbol table
 
 ### 🌳 Interactive Parse Tree
+
 - SVG-rendered, auto-laid-out tree
 - **Click any node** to collapse/expand its subtree
 - **Collapse All** — folds all non-root children so only direct children are visible as `[+]` boxes
@@ -33,26 +39,33 @@ Every expression is processed visibly through:
 - Node tooltips on hover showing type and operation detail
 
 ### ✦ AI-Assisted Error Suggestions
+
 When an expression fails, PhaseForge automatically calls the **Groq LLaMA 3.3 70B** model to suggest a corrected expression. A banner appears below the editor with:
+
 - The AI-suggested fix displayed inline
 - A one-sentence explanation of what was wrong
 - **Apply Fix** button — pastes the suggestion into the editor in one click
 
 ### 📖 Interactive Language Reference
+
 Every entry in the Language Reference section has a **▶ Run** button. Clicking it:
+
 - Pastes the example expression directly into the playground input
 - Scrolls to the playground
 - Automatically runs it
 
 ### 🛡 Friendly Python Error Messages
+
 Python internal errors are translated into readable messages:
-- `OverflowError / int too large to convert` → *"Result Too Large — try smaller numbers or add a decimal"*
-- `ZeroDivisionError` → *"Division by Zero"*
-- `math domain error` → *"Math Domain Error"*
-- `RecursionError` → *"Stack Overflow"*
+
+- `OverflowError / int too large to convert` → _"Result Too Large — try smaller numbers or add a decimal"_
+- `ZeroDivisionError` → _"Division by Zero"_
+- `math domain error` → _"Math Domain Error"_
+- `RecursionError` → _"Stack Overflow"_
 - All others: cleaned up and shown without a raw Python traceback
 
 ### 💾 Session Variables
+
 Variables declared with `VAR` persist across expressions within the same browser session. The Symbol Table tab shows all built-in constants and user-defined variables side by side.
 
 ---
@@ -60,31 +73,37 @@ Variables declared with `VAR` persist across expressions within the same browser
 ## 🧮 Language Reference
 
 ### Arithmetic
-| Operator | Operation | Example |
-|---|---|---|
-| `+` | Addition | `2 + 3` |
-| `-` | Subtraction | `5 - 2` |
-| `*` | Multiplication | `3 * 4` |
-| `/` | Division | `10 / 4` |
-| `**` | Power | `2 ** 8` |
-| `%` | Modulo | `10 % 3` |
-| `\` | Floor division | `10 \ 3` |
-| `$` | Nth root | `2 $ 16` |
-| `!` | Factorial | `5!` |
+
+| Operator | Operation      | Example  |
+| -------- | -------------- | -------- |
+| `+`      | Addition       | `2 + 3`  |
+| `-`      | Subtraction    | `5 - 2`  |
+| `*`      | Multiplication | `3 * 4`  |
+| `/`      | Division       | `10 / 4` |
+| `**`     | Power          | `2 ** 8` |
+| `%`      | Modulo         | `10 % 3` |
+| `\`      | Floor division | `10 \ 3` |
+| `$`      | Nth root       | `2 $ 16` |
+| `!`      | Factorial      | `5!`     |
 
 ### Bitwise
+
 `&` AND · `|` OR · `^` XOR · `"` XNOR · `~` NOT · `<<` Left Shift · `>>` Right Shift · `>>>` Unsigned Right Shift
 
 ### Comparison
+
 `#` Equal · `@` Not Equal · `>` Greater · `<` Less · `}` ≥ · `{` ≤ · `;` GCD · `:` LCM · `?` Compare (returns text)
 
 ### Functions
+
 `sin cos tan` (rad) · `sind cosd tand` (deg) · `asin acos atan` · `asind acosd atand` · `sinh cosh tanh` · `exp ln log`
 
 ### Built-in Constants
+
 `PI` · `E` · `TAU` · `INF` · `NAN` · `null`
 
 ### Variables
+
 ```basic
 VAR x = 10
 VAR y = x * 2 + sind(30)
@@ -130,11 +149,7 @@ phaseforge/
 │   └── img/
 │       ├── favicon.svg / .ico / -32.png / -192.png
 │       └── team/               ← Drop team photos here
-│
-└── deploy/
-    ├── nginx.conf              ← Nginx config (HTTP + commented HTTPS block)
-    ├── phaseforge.service      ← systemd unit file for Gunicorn
-    └── deploy.sh               ← One-shot Ubuntu deployment script
+└── deploy.sh               ← One-shot Ubuntu deployment scriptr
 ```
 
 ---
@@ -155,67 +170,15 @@ python app.py
 
 ---
 
-## 🌐 Deployment (Ubuntu VPS)
-
-### Automated — one script
-
-```bash
-# On your VPS
-cd /path/to/phaseforge
-sudo bash deploy/deploy.sh
-```
-
-The script installs Nginx, creates a Python virtualenv, registers a systemd service, configures Nginx as a reverse proxy, and optionally runs Certbot for HTTPS.
-
-### Manual steps
-
-```bash
-# 1. System packages
-sudo apt update && sudo apt install -y python3 python3-venv nginx certbot python3-certbot-nginx
-
-# 2. App directory
-sudo cp -r . /var/www/phaseforge
-sudo chown -R www-data:www-data /var/www/phaseforge
-sudo mkdir -p /var/log/phaseforge && sudo chown www-data: /var/log/phaseforge
-
-# 3. Python venv
-sudo -u www-data python3 -m venv /var/www/phaseforge/venv
-sudo -u www-data /var/www/phaseforge/venv/bin/pip install -r /var/www/phaseforge/requirements.txt
-
-# 4. Nginx
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/phaseforge
-sudo ln -sf /etc/nginx/sites-available/phaseforge /etc/nginx/sites-enabled/phaseforge
-sudo nginx -t && sudo systemctl reload nginx
-
-# 5. Systemd
-sudo cp deploy/phaseforge.service /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now phaseforge
-
-# 6. SSL (after DNS is live)
-sudo certbot --nginx -d phaseforge.dpdns.org -d www.phaseforge.dpdns.org
-```
-
-### Useful Commands
-
-| Action | Command |
-|---|---|
-| Service status | `sudo systemctl status phaseforge` |
-| Restart service | `sudo systemctl restart phaseforge` |
-| Live logs | `sudo journalctl -u phaseforge -f` |
-| Reload Nginx | `sudo nginx -t && sudo systemctl reload nginx` |
-| Renew SSL | `sudo certbot renew --dry-run` |
-
----
-
 ## 🔌 API Reference
 
-| Method | Path | Body | Returns |
-|---|---|---|---|
-| `POST` | `/api/run` | `{"code":"..."}` | result, tokens, tree, error, tree_partial |
-| `POST` | `/api/suggest` | `{"code":"...","error":"..."}` | AI-suggested fix + explanation |
-| `POST` | `/api/tokenize` | `{"code":"..."}` | token list |
-| `POST` | `/api/parse` | `{"code":"..."}` | parse tree (partial if needed) |
-| `POST` | `/api/reset` | — | clears session variables |
+| Method | Path            | Body                           | Returns                                   |
+| ------ | --------------- | ------------------------------ | ----------------------------------------- |
+| `POST` | `/api/run`      | `{"code":"..."}`               | result, tokens, tree, error, tree_partial |
+| `POST` | `/api/suggest`  | `{"code":"...","error":"..."}` | AI-suggested fix + explanation            |
+| `POST` | `/api/tokenize` | `{"code":"..."}`               | token list                                |
+| `POST` | `/api/parse`    | `{"code":"..."}`               | parse tree (partial if needed)            |
+| `POST` | `/api/reset`    | —                              | clears session variables                  |
 
 ---
 
@@ -243,13 +206,13 @@ for code, expected in tests:
 
 ## 🤝 Team
 
-| Name | LinkedIn |
-|---|---|
-| Mohamed Sayed | [linkedin.com/in/mohamed-sayed-60ba8b264](https://www.linkedin.com/in/mohamed-sayed-60ba8b264) |
-| Ammar Yasser  | [linkedin.com/in/ammar-yasser-83537a267](https://www.linkedin.com/in/ammar-yasser-83537a267)  |
-| Beshoy Farouk | [linkedin.com/in/beshoy-farouk](https://www.linkedin.com/in/beshoy-farouk)                   |
+| Name            | LinkedIn                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| Mohamed Sayed   | [linkedin.com/in/mohamed-sayed-60ba8b264](https://www.linkedin.com/in/mohamed-sayed-60ba8b264)       |
+| Ammar Yasser    | [linkedin.com/in/ammar-yasser-83537a267](https://www.linkedin.com/in/ammar-yasser-83537a267)         |
+| Beshoy Farouk   | [linkedin.com/in/beshoy-farouk](https://www.linkedin.com/in/beshoy-farouk)                           |
 | Hussien Mohamed | [linkedin.com/in/hussien-mohammed-426947257](https://www.linkedin.com/in/hussien-mohammed-426947257) |
-| Michael Hany  | [linkedin.com/in/michael-hany-572034262](https://www.linkedin.com/in/michael-hany-572034262)  |
+| Michael Hany    | [linkedin.com/in/michael-hany-572034262](https://www.linkedin.com/in/michael-hany-572034262)         |
 
 ---
 
@@ -259,4 +222,4 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-*"Simplicity is the ultimate sophistication." — Leonardo da Vinci*
+_"Simplicity is the ultimate sophistication." — Leonardo da Vinci_
