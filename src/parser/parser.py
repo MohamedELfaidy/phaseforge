@@ -107,7 +107,7 @@ class Parser:
             self.advance()
             left = UnaryOpNode(fact_tok, left)
 
-        while self.current_tok.type in (TT_POW, TT_MOD):
+        while self.current_tok.type in (TT_POW, TT_MOD, TT_SQRT):
             op_tok = self.current_tok
             res.register_advancement()
             self.advance()
@@ -133,7 +133,7 @@ class Parser:
         return self.power()
 
     def term(self):
-        return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_FDI), self.arith_expr)
+        return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_FDI))
 
     def expr(self):
         res = ParseResult()
