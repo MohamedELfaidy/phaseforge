@@ -190,21 +190,31 @@ async function fetchAIExplanation(code, result) {
   const container = document.getElementById('aiExplanation');
   if (!container) return;
 
+  // Show loading state
+  container.innerHTML = `<span class="ai-sparkle">✦</span> Thinking...`;
+  container.style.display = 'block';
+  container.classList.add('loading');
+
   try {
-    const res  = await fetch('/api/explain', {
+    const res = await fetch('/api/explain', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({code, result}),
     });
     const data = await res.json();
+    container.classList.remove('loading');
+    
     if (data.explanation) {
       container.innerHTML = `<span class="ai-sparkle">✦</span> ${esc(data.explanation)}`;
-      container.style.display = 'block';
+    } else {
+      container.style.display = 'none'; // Hide if no explanation returned
     }
   } catch(e) {
+    container.style.display = 'none';
     console.error("AI Explanation failed", e);
   }
 }
+
 
 function hideAISuggestion() {
   aiSuggBanner.style.display = 'none';
