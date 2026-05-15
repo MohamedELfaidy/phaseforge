@@ -18,12 +18,11 @@ echo "╚═══════════════════════�
 echo ""
 
 
-# ── 1. Pull latest changes ──────────────────────────
-echo "▶ Pulling latest code from $BRANCH branch..."
+echo "▶ Force syncing with origin/$BRANCH (discard local changes)..."
 cd "$APP_DIR"
-sudo -u www-data git fetch origin
-sudo -u www-data git checkout "$BRANCH"
-sudo -u www-data git pull origin "$BRANCH"
+sudo -u www-data git fetch origin "$BRANCH"
+sudo -u www-data git reset --hard "origin/$BRANCH"
+sudo -u www-data git clean -fd
 
 # ── 2. Update Python dependencies (if requirements.txt changed) ──
 echo "▶ Updating Python dependencies..."
