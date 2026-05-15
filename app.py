@@ -213,7 +213,9 @@ def api_run():
         # Convert float that is a whole number to int string, but only for
         # reasonable sizes; leave very large numbers as-is (already guarded
         # by sys.set_int_max_str_digits above)
-        if isinstance(raw, float) and raw == int(raw) and abs(raw) < 1e15:
+        if isinstance(raw, bool):
+            display = 'true' if raw else 'false'
+        elif isinstance(raw, float) and raw == int(raw) and abs(raw) < 1e15:
             display = str(int(raw))
         else:
             display = str(raw) if raw is not None else 'None'

@@ -497,7 +497,7 @@ btnCenter.addEventListener('click', () => {
 // ──────────────────────────────────────────────────────
 // SYMBOL TABLE
 // ──────────────────────────────────────────────────────
-const BUILTINS = {PI:'3.14159\u2026',E:'2.71828\u2026',TAU:'6.28318\u2026',INF:'Infinity',NAN:'NaN',null:'0'};
+const BUILTINS = {PI:'3.14159\u2026',E:'2.71828\u2026',TAU:'6.28318\u2026',INF:'Infinity',NAN:'NaN',null:'0',true:'true',false:'false'};
 
 function renderSymbolTable() {
   symbolArea.innerHTML = '';

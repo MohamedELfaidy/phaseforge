@@ -53,8 +53,13 @@ class Lexer:
                 tokens.append(Token(TT_SQRT, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '!':
-                tokens.append(Token(TT_FACT, pos_start=self.pos))
+                pos_start = self.pos.copy()
                 self.advance()
+                if self.current_char == '=':
+                    tokens.append(Token(TT_NOT_EQUIVALENT, pos_start=pos_start))
+                    self.advance()
+                else:
+                    tokens.append(Token(TT_FACT, pos_start=pos_start))
             elif self.current_char == '\\':
                 tokens.append(Token(TT_FDI, pos_start=self.pos))
                 self.advance()
@@ -115,8 +120,13 @@ class Lexer:
                 tokens.append(Token(TT_COMPARE, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '=':
-                tokens.append(Token(TT_EQ, pos_start=self.pos))
+                pos_start = self.pos.copy()
                 self.advance()
+                if self.current_char == '=':
+                    tokens.append(Token(TT_EQUIVALENT, pos_start=pos_start))
+                    self.advance()
+                else:
+                    tokens.append(Token(TT_EQ, pos_start=pos_start))
             elif self.current_char == '(':
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
                 self.advance()

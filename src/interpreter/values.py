@@ -114,27 +114,27 @@ class Number:
 
     def equal_to(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value == other.value)).set_context(self.context), None
+            return Number(self.value == other.value).set_context(self.context), None
 
     def not_equal_to(self, other):
         if isinstance(other, Number):
-            return Number(int(not (self.value == other.value))).set_context(self.context), None
+            return Number(self.value != other.value).set_context(self.context), None
 
     def bigger(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value > other.value)).set_context(self.context), None
+            return Number(self.value > other.value).set_context(self.context), None
 
     def smaller(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value < other.value)).set_context(self.context), None
+            return Number(self.value < other.value).set_context(self.context), None
 
     def bigger_or_equal(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value >= other.value)).set_context(self.context), None
+            return Number(self.value >= other.value).set_context(self.context), None
 
     def smaller_or_equal(self, other):
         if isinstance(other, Number):
-            return Number(int(self.value <= other.value)).set_context(self.context), None
+            return Number(self.value <= other.value).set_context(self.context), None
 
     def gcd_of(self, other):
         if isinstance(other, Number):
@@ -247,4 +247,6 @@ class Number:
         return copy
 
     def __repr__(self):
+        if isinstance(self.value, bool):
+            return str(self.value).lower()
         return str(self.value)
