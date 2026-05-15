@@ -27,8 +27,8 @@ sudo -u www-data git pull origin "$BRANCH"
 
 # ── 2. Update Python dependencies (if requirements.txt changed) ──
 echo "▶ Updating Python dependencies..."
-sudo -u www-data "$APP_DIR/venv/bin/pip" install --upgrade pip -q
-sudo -u www-data "$APP_DIR/venv/bin/pip" install -r "$APP_DIR/requirements.txt" -q
+sudo -u www-data "$APP_DIR/venv/bin/pip" install --no-cache-dir --upgrade pip -q
+sudo -u www-data "$APP_DIR/venv/bin/pip" install --no-cache-dir -r "$APP_DIR/requirements.txt" -q
 
 # ── 4. Restart the application service ───────────────
 echo "▶ Restarting $SERVICE service..."
