@@ -535,25 +535,56 @@ phaseTabs.addEventListener('click', e => {
 // ──────────────────────────────────────────────────────
 // REFERENCE — Run buttons
 // ──────────────────────────────────────────────────────
+// ── helpers ──────────────────────────────────────────
+function decodeHTMLEntities(str) {
+  // The browser already decodes &amp; → & in dataset values when the HTML
+  // is parsed, but double-encoded sequences like &lt;&lt; need one more pass.
+  const d = document.createElement('div');
+  d.innerHTML = str;
+  return d.textContent;
+}
+
+function switchToTab(tabName) {
+  document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tab = document.querySelector(`.phase-tab[data-tab="${tabName}"]`);
+  const panel = document.getElementById(`tab-${tabName}`);
+  if (tab)   tab.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
+// ── Reference "▶ Run" buttons ─────────────────────────
 document.querySelectorAll('.ref-run-btn').forEach(btn => {
   btn.addEventListener('click', e => {
+    e.preventDefault();
     e.stopPropagation();
-    const row  = btn.closest('.ref-row');
-    const expr = row ? row.dataset.run : null;
-    if (!expr) return;
-    // Decode HTML entities in data-run (e.g. &amp; → &)
-    const tmp = document.createElement('textarea');
-    tmp.innerHTML = expr;
-    const decoded = tmp.value;
 
+    const row  = btn.closest('.ref-row');
+    if (!row) return;
+
+    // dataset.run already has one pass of HTML decoding done by the browser;
+    // run it through our helper for any remaining encoded chars (e.g. &lt;&lt;)
+    const raw     = row.dataset.run || '';
+    const decoded = decodeHTMLEntities(raw);
+    if (!decoded.trim()) return;
+
+    // 1. Fill the editor
     codeInput.value = decoded;
-    document.getElementById('playground').scrollIntoView({behavior:'smooth'});
-    // Switch to tokens tab
-    document.querySelectorAll('.phase-tab').forEach(t  => t.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p  => p.classList.remove('active'));
-    document.querySelector('.phase-tab[data-tab="tokens"]').classList.add('active');
-    document.getElementById('tab-tokens').classList.add('active');
-    setTimeout(runCode, 350);
+
+    // 2. Switch to the tokens tab immediately
+    switchToTab('tokens');
+
+    // 3. Scroll the playground into view
+    const playground = document.getElementById('playground');
+    playground.scrollIntoView({behavior: 'smooth', block: 'start'});
+
+    // 4. Run after scroll settles (smooth scroll takes ~400 ms on most browsers)
+    //    We also wait for the tab switch to complete.
+    clearTimeout(window._refRunTimer);
+    window._refRunTimer = setTimeout(() => {
+      codeInput.focus();
+      runCode();
+    }, 500);
   });
 });
 
