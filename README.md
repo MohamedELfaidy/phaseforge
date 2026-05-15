@@ -8,7 +8,7 @@ A full-stack Flask web application that walks every expression through all five 
 
 **University:** Minia University · Faculty of Computers & Information  
 **Course:** Compiler Design 2025–2026  
-**Instructor:** Dr. Moussa Elkedr  
+**Instructor:** Dr. Moussa Elkhedr  
 **Teaching Assistant:** Eng. Mina Essam  
 
 ---

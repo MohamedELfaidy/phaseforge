@@ -10,11 +10,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.set_int_max_str_digits(100_000)
 
 from flask import Flask, render_template, request, jsonify, session
+from dotenv import load_dotenv
 from src.runner import run, clear_session
 from src.lexer import Lexer
 from src.parser import Parser
 from src.core.tokens import *
 import uuid
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'phaseforge-secret-2025')
