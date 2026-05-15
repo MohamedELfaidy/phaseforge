@@ -1,17 +1,41 @@
+import os
+import json
 from .lexer import Lexer
 from .parser import Parser
 from .interpreter import Interpreter, Context
+from .interpreter.values import Number
 from .builtins import create_global_symbol_table
 
-# Per-session symbol tables
-_sessions = {}
+# Directory to store session data for cross-process persistence (Gunicorn workers)
+SESSION_DIR = 'sessions'
 
+def save_session(session_id, symbol_table):
+    if not session_id: return
+    # We only save the actual values. Positions and contexts are recreated on load.
+    data = {name: num.value for name, num in symbol_table.symbols.items()}
+    try:
+        if not os.path.exists(SESSION_DIR):
+            os.makedirs(SESSION_DIR)
+        path = os.path.join(SESSION_DIR, f"{session_id}.json")
+        with open(path, 'w') as f:
+            json.dump(data, f)
+    except Exception:
+        pass
 
-def get_session_table(session_id=None):
-    if session_id and session_id in _sessions:
-        return _sessions[session_id]
-    return create_global_symbol_table()
-
+def load_session(session_id):
+    table = create_global_symbol_table()
+    if not session_id: return table
+    
+    path = os.path.join(SESSION_DIR, f"{session_id}.json")
+    if os.path.exists(path):
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+                for name, val in data.items():
+                    table.set(name, Number(val))
+        except Exception:
+            pass
+    return table
 
 def run(fn, text, session_id=None):
     lexer = Lexer(fn, text)
@@ -27,17 +51,21 @@ def run(fn, text, session_id=None):
     interpreter = Interpreter()
     context = Context('<program>')
 
-    if session_id:
-        if session_id not in _sessions:
-            _sessions[session_id] = create_global_symbol_table()
-        context.symbol_table = _sessions[session_id]
-    else:
-        context.symbol_table = create_global_symbol_table()
+    # Load session from file if session_id is provided (supports multiple Gunicorn workers)
+    context.symbol_table = load_session(session_id)
 
     result = interpreter.visit(ast.node, context)
+    
+    # Save updated session back to file
+    if not result.error:
+        save_session(session_id, context.symbol_table)
+        
     return result.value, result.error, tokens, ast.node
 
-
 def clear_session(session_id):
-    if session_id in _sessions:
-        del _sessions[session_id]
+    path = os.path.join(SESSION_DIR, f"{session_id}.json")
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
