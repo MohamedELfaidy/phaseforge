@@ -562,10 +562,8 @@ document.querySelectorAll('.ref-run-btn').forEach(btn => {
     const row  = btn.closest('.ref-row');
     if (!row) return;
 
-    // dataset.run already has one pass of HTML decoding done by the browser;
-    // run it through our helper for any remaining encoded chars (e.g. &lt;&lt;)
-    const raw     = row.dataset.run || '';
-    const decoded = decodeHTMLEntities(raw);
+    // dataset.run is already decoded by the browser when parsing the HTML.
+    const decoded = row.dataset.run || '';
     if (!decoded.trim()) return;
 
     // 1. Fill the editor

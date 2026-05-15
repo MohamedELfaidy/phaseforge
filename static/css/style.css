@@ -66,15 +66,6 @@
 
 
 
-
-.ref-row:hover 
-
-
-/* always show on mobile */
-@media (max-width: 640px) {
-  
-}
-
 /* ═══ AI SUGGESTION BANNER ═══ */
 .ai-banner {
   display: flex;
