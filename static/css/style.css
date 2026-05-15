@@ -1414,7 +1414,7 @@ body {
 
 .ref-row {
   display: grid;
-  grid-template-columns: 72px 1fr auto auto;
+  grid-template-columns: max-content 1fr auto auto;
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 0.6rem;
