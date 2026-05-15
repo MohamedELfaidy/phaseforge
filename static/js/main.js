@@ -1,71 +1,90 @@
-/* ═══════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    PhaseForge — main.js
-   Full interactive compiler visualiser
-═══════════════════════════════════════════ */
+   Compiler visualiser with SVG tree, collapse/expand,
+   AI suggestion, reference Run buttons, friendly errors
+═══════════════════════════════════════════════════════ */
 'use strict';
 
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 // STATE
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 const state = {
-  symbolTable: {},
-  lastTokens: [],
-  lastTree: null,
+  symbolTable:     {},
+  lastTokens:      [],
+  lastTree:        null,   // raw tree JSON from server
+  collapsedIds:    new Set(), // IDs of nodes the user collapsed
+  treeIsPartial:   false,
+  lastCode:        '',
+  lastError:       '',
+  pendingSuggestion: null,
 };
 
-// ──────────────────────────────────────────
-// DOM REFS
-// ──────────────────────────────────────────
-const codeInput = document.getElementById('codeInput');
-const btnRun = document.getElementById('btnRun');
-const btnClear = document.getElementById('btnClear');
-const btnReset = document.getElementById('btnReset');
-const outputArea = document.getElementById('outputArea');
-const tokenStream = document.getElementById('tokenStream');
+// ──────────────────────────────────────────────────────
+// DOM
+// ──────────────────────────────────────────────────────
+const codeInput      = document.getElementById('codeInput');
+const btnRun         = document.getElementById('btnRun');
+const btnClear       = document.getElementById('btnClear');
+const btnReset       = document.getElementById('btnReset');
+const outputArea     = document.getElementById('outputArea');
+const tokenStream    = document.getElementById('tokenStream');
 const tokenTableBody = document.getElementById('tokenTableBody');
 const tokenTableWrap = document.getElementById('tokenTable');
-const treeContainer = document.getElementById('treeContainer');
-const symbolArea = document.getElementById('symbolTableArea');
-const nodeTooltip = document.getElementById('nodeTooltip');
-const phaseTabs = document.getElementById('phaseTabs');
-const mobileToggle = document.getElementById('mobileToggle');
-const btnExpandAll = document.getElementById('btnExpandAll');
+const treeContainer  = document.getElementById('treeContainer');
+const symbolArea     = document.getElementById('symbolTableArea');
+const nodeTooltip    = document.getElementById('nodeTooltip');
+const phaseTabs      = document.getElementById('phaseTabs');
+const mobileToggle   = document.getElementById('mobileToggle');
+const btnExpandAll   = document.getElementById('btnExpandAll');
 const btnCollapseAll = document.getElementById('btnCollapseAll');
-const btnCenter = document.getElementById('btnCenter');
+const btnCenter      = document.getElementById('btnCenter');
+const partialBanner  = document.getElementById('partialBanner');
+const aiSuggBanner   = document.getElementById('aiSuggestionBanner');
+const aiSuggText     = document.getElementById('aiSuggestionText');
+const btnApplySugg   = document.getElementById('btnApplySuggestion');
+const btnDismissSugg = document.getElementById('btnDismissSuggestion');
 
-// ──────────────────────────────────────────
-// UTILS
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
+// HELPERS
+// ──────────────────────────────────────────────────────
 const esc = s => String(s)
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 const CAT = {
-  'token-int': 'Integer', 'token-float': 'Float',
-  'token-keyword': 'Keyword', 'token-identifier': 'Identifier',
-  'token-op': 'Operator', 'token-func': 'Function',
-  'token-bitwise': 'Bitwise', 'token-compare': 'Comparison',
-  'token-math': 'Math Op', 'token-eq': 'Assignment',
-  'token-paren': 'Punctuation', 'token-eof': 'EOF',
-  'token-default': 'Other',
+  'token-int':'Integer','token-float':'Float','token-keyword':'Keyword',
+  'token-identifier':'Identifier','token-op':'Operator','token-func':'Function',
+  'token-bitwise':'Bitwise','token-compare':'Comparison','token-math':'Math Op',
+  'token-eq':'Assignment','token-paren':'Punctuation','token-eof':'EOF','token-default':'Other',
 };
 
-// ──────────────────────────────────────────
-// RUN PIPELINE
-// ──────────────────────────────────────────
+// Assign a stable unique ID to every node in the tree so we can track collapse state
+let _nodeIdCounter = 0;
+function assignNodeIds(node) {
+  if (!node) return;
+  node._id = ++_nodeIdCounter;
+  if (node.children) node.children.forEach(assignNodeIds);
+}
+
+// ──────────────────────────────────────────────────────
+// RUN
+// ──────────────────────────────────────────────────────
 async function runCode() {
   const code = codeInput.value.trim();
   if (!code) return;
+  state.lastCode = code;
   setRunning(true);
+  hideAISuggestion();
+
   try {
-    const res = await fetch('/api/run', {
+    const res  = await fetch('/api/run', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({code}),
     });
     const data = await res.json();
     handleResult(data, code);
-  } catch (e) {
+  } catch(e) {
     showOutput('error', 'Network Error', e.message);
   } finally {
     setRunning(false);
@@ -80,22 +99,35 @@ function setRunning(on) {
 }
 
 function handleResult(data, code) {
+  // Tokens
   if (data.tokens && data.tokens.length) {
     state.lastTokens = data.tokens;
     renderTokens(data.tokens);
   }
+
+  // Parse tree
   if (data.tree) {
-    state.lastTree = data.tree;
-    renderTree(data.tree);
+    _nodeIdCounter = 0;
+    state.collapsedIds.clear();
+    assignNodeIds(data.tree);
+    state.lastTree      = data.tree;
+    state.treeIsPartial = !!data.tree_partial;
+    partialBanner.style.display = state.treeIsPartial ? 'block' : 'none';
+    renderTree();
   }
+
+  // Output + AI suggestion on error
   if (data.success) {
     showOutput('ok', 'Result', data.result);
     const vm = code.match(/^\s*VAR\s+(\w+)\s*=/i);
     if (vm) state.symbolTable[vm[1]] = data.result;
     renderSymbolTable();
+    hideAISuggestion();
   } else {
-    showOutput('error', data.error_name || 'Error',
-      data.error_details || data.error || 'Unknown error');
+    state.lastError = data.error_details || data.error || '';
+    showOutput('error', data.error_name || 'Error', state.lastError);
+    // Kick off AI suggestion asynchronously
+    fetchAISuggestion(code, state.lastError);
   }
 }
 
@@ -115,15 +147,61 @@ function showOutput(type, label, msg) {
   }
 }
 
-// ──────────────────────────────────────────
-// TOKENISATION VIEW
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
+// AI SUGGESTION
+// ──────────────────────────────────────────────────────
+async function fetchAISuggestion(code, error) {
+  // Show a subtle loading state inside the banner area
+  aiSuggBanner.style.display = 'flex';
+  aiSuggText.textContent = 'Asking AI for a fix\u2026';
+  btnApplySugg.style.display = 'none';
+  btnDismissSugg.style.display = 'none';
+  state.pendingSuggestion = null;
+
+  try {
+    const res  = await fetch('/api/suggest', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({code, error}),
+    });
+    const data = await res.json();
+    if (data.suggestion) {
+      state.pendingSuggestion = data.suggestion;
+      aiSuggText.innerHTML =
+        `<strong>${esc(data.suggestion)}</strong>`
+        + (data.explanation ? ` <em style="font-family:var(--font-sans);font-size:0.8rem;color:var(--gray-500)">— ${esc(data.explanation)}</em>` : '');
+      btnApplySugg.style.display = 'inline-block';
+      btnDismissSugg.style.display = 'inline-block';
+    } else {
+      hideAISuggestion();
+    }
+  } catch(e) {
+    hideAISuggestion();
+  }
+}
+
+function hideAISuggestion() {
+  aiSuggBanner.style.display = 'none';
+  state.pendingSuggestion = null;
+}
+
+btnApplySugg.addEventListener('click', () => {
+  if (state.pendingSuggestion) {
+    codeInput.value = state.pendingSuggestion;
+    hideAISuggestion();
+    codeInput.focus();
+  }
+});
+btnDismissSugg.addEventListener('click', hideAISuggestion);
+
+// ──────────────────────────────────────────────────────
+// TOKENS
+// ──────────────────────────────────────────────────────
 function renderTokens(tokens) {
-  /* chips */
   tokenStream.innerHTML = '';
   tokens.forEach((tok, i) => {
     const label = tok.value !== '' ? tok.value : tok.type;
-    const chip = document.createElement('div');
+    const chip  = document.createElement('div');
     chip.className = 'tok-chip animate-in';
     chip.style.animationDelay = `${Math.min(i * 25, 500)}ms`;
     chip.innerHTML = `
@@ -132,72 +210,69 @@ function renderTokens(tokens) {
     tokenStream.appendChild(chip);
   });
 
-  /* table */
   tokenTableBody.innerHTML = '';
   tokens.forEach((tok, i) => {
     const label = tok.value !== '' ? tok.value : tok.type;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${i + 1}</td>
+      <td>${i+1}</td>
       <td><span class="tok-badge ${esc(tok.color_class)}">${esc(tok.type)}</span></td>
       <td><code>${esc(label)}</code></td>
-      <td>col&nbsp;${tok.col}${tok.col_end ? '\u2013' + tok.col_end : ''}</td>
+      <td>col&nbsp;${tok.col}${tok.col_end ? '\u2013'+tok.col_end : ''}</td>
       <td>${CAT[tok.color_class] || 'Other'}</td>`;
     tokenTableBody.appendChild(tr);
   });
   tokenTableWrap.style.display = 'block';
 }
 
-// ──────────────────────────────────────────
-// PARSE TREE — SVG renderer
-// ──────────────────────────────────────────
-const NW = 92;   // node width
-const NH = 36;   // node height
-const HGAP = 22;   // horizontal gap
-const VGAP = 70;   // vertical gap between rows
-const RX = 8;    // border-radius
+// ──────────────────────────────────────────────────────
+// PARSE TREE — SVG renderer with collapse support
+// ──────────────────────────────────────────────────────
+const NW   = 92;
+const NH   = 36;
+const HGAP = 22;
+const VGAP = 70;
+const RX   = 8;
 
-const FILL = { 'node-number': '#eff6ff', 'node-var': '#f0fdf4', 'node-assign': '#faf5ff', 'node-binop': '#fffbeb', 'node-unary': '#fff7ed', 'node-func': '#fdf2f8', 'node-unknown': '#f8f9fb' };
-const STROKE = { 'node-number': '#93c5fd', 'node-var': '#86efac', 'node-assign': '#d8b4fe', 'node-binop': '#fcd34d', 'node-unary': '#fdba74', 'node-func': '#f9a8d4', 'node-unknown': '#e4e8f0' };
-const TCOLOR = { 'node-number': '#1d4ed8', 'node-var': '#15803d', 'node-assign': '#7c3aed', 'node-binop': '#92400e', 'node-unary': '#c2410c', 'node-func': '#be185d', 'node-unknown': '#6b7280' };
+const FILL   = {'node-number':'#eff6ff','node-var':'#f0fdf4','node-assign':'#faf5ff','node-binop':'#fffbeb','node-unary':'#fff7ed','node-func':'#fdf2f8','node-unknown':'#f8f9fb'};
+const STROKE = {'node-number':'#93c5fd','node-var':'#86efac','node-assign':'#d8b4fe','node-binop':'#fcd34d','node-unary':'#fdba74','node-func':'#f9a8d4','node-unknown':'#e4e8f0'};
+const TCOLOR = {'node-number':'#1d4ed8','node-var':'#15803d','node-assign':'#7c3aed','node-binop':'#92400e','node-unary':'#c2410c','node-func':'#be185d','node-unknown':'#6b7280'};
 
-function renderTree(root) {
+/** Re-render the current tree (respecting state.collapsedIds). */
+function renderTree() {
   treeContainer.innerHTML = '';
+  const root = state.lastTree;
   if (!root) {
-    treeContainer.innerHTML = '<div class="tab-empty">No parse tree available</div>';
+    treeContainer.innerHTML = '<div class="tab-empty">Run an expression to see the parse tree</div>';
     return;
   }
 
-  computeSubtreeWidth(root);
+  // Layout pass — only expand non-collapsed subtrees
+  computeWidth(root);
   const depth = treeDepth(root);
-  const svgW = root._w + 40;
-  const svgH = (depth + 1) * (NH + VGAP) + 40;
-
+  const svgW  = root._w + 40;
+  const svgH  = (depth + 1) * (NH + VGAP) + 50;
   placeNodes(root, 20, 20, root._w);
 
-  /* SVG */
-  const NS = 'http://www.w3.org/2000/svg';
+  const NS  = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('width', svgW);
+  svg.setAttribute('width',  svgW);
   svg.setAttribute('height', svgH);
   svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
   svg.style.cssText = 'display:block;overflow:visible;';
 
-  /* defs — drop shadow filter */
-  const defs = document.createElementNS(NS, 'defs');
-  defs.innerHTML = `
-    <filter id="node-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(79,70,229,0.18)"/>
-    </filter>`;
+  // defs
+  const defs = document.createElementNS(NS,'defs');
+  defs.innerHTML = `<filter id="node-glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(79,70,229,0.22)"/>
+  </filter>`;
   svg.appendChild(defs);
 
-  /* edges */
-  const eGrp = document.createElementNS(NS, 'g');
+  const eGrp = document.createElementNS(NS,'g');
   paintEdges(root, eGrp, NS);
   svg.appendChild(eGrp);
 
-  /* nodes */
-  const nGrp = document.createElementNS(NS, 'g');
+  const nGrp = document.createElementNS(NS,'g');
   paintNodes(root, nGrp, NS);
   svg.appendChild(nGrp);
 
@@ -210,152 +285,226 @@ function renderTree(root) {
   treeContainer.appendChild(outer);
 }
 
-function treeDepth(n) {
-  if (!n.children || !n.children.length) return 0;
-  return 1 + Math.max(...n.children.map(treeDepth));
+function isCollapsed(node) {
+  return state.collapsedIds.has(node._id);
 }
 
-function computeSubtreeWidth(n) {
-  if (!n.children || !n.children.length) {
-    n._w = NW + HGAP;
+function treeDepth(node) {
+  if (!node) return 0;
+  if (isCollapsed(node) || !node.children || !node.children.length) return 0;
+  return 1 + Math.max(...node.children.map(treeDepth));
+}
+
+function computeWidth(node) {
+  if (!node) return;
+  const collapsed = isCollapsed(node);
+  if (collapsed || !node.children || !node.children.length) {
+    node._w = NW + HGAP;
     return;
   }
-  n.children.forEach(computeSubtreeWidth);
-  n._w = Math.max(NW + HGAP, n.children.reduce((s, c) => s + c._w, 0));
+  node.children.forEach(computeWidth);
+  node._w = Math.max(NW + HGAP, node.children.reduce((s,c) => s + c._w, 0));
 }
 
-function placeNodes(n, xLeft, y, totalW) {
-  if (!n.children || !n.children.length) {
-    n._cx = xLeft + n._w / 2;
-    n._y = y;
+function placeNodes(node, xLeft, y, totalW) {
+  if (!node) return;
+  const collapsed = isCollapsed(node);
+  if (collapsed || !node.children || !node.children.length) {
+    node._cx = xLeft + node._w / 2;
+    node._y  = y;
     return;
   }
   let cx = xLeft;
-  n.children.forEach(child => {
+  node.children.forEach(child => {
     placeNodes(child, cx, y + NH + VGAP, totalW);
     cx += child._w;
   });
-  const f = n.children[0]._cx;
-  const l = n.children[n.children.length - 1]._cx;
-  n._cx = (f + l) / 2;
-  n._y = y;
+  const f = node.children[0]._cx;
+  const l = node.children[node.children.length-1]._cx;
+  node._cx = (f + l) / 2;
+  node._y  = y;
 }
 
-function paintEdges(n, g, NS) {
-  if (!n.children) return;
-  n.children.forEach(child => {
-    const py = n._y + NH;
+function paintEdges(node, g, NS) {
+  if (!node || isCollapsed(node)) return;
+  if (!node.children) return;
+  node.children.forEach(child => {
+    const py = node._y + NH;
     const cy = child._y;
     const my = (py + cy) / 2;
-    const path = document.createElementNS(NS, 'path');
-    path.setAttribute('d', `M${n._cx},${py} C${n._cx},${my} ${child._cx},${my} ${child._cx},${cy}`);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', '#c8d3e8');
-    path.setAttribute('stroke-width', '1.8');
-    path.setAttribute('stroke-linecap', 'round');
+    const path = document.createElementNS(NS,'path');
+    path.setAttribute('d', `M${node._cx},${py} C${node._cx},${my} ${child._cx},${my} ${child._cx},${cy}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke','#c8d3e8');
+    path.setAttribute('stroke-width','1.8');
+    path.setAttribute('stroke-linecap','round');
     g.appendChild(path);
     paintEdges(child, g, NS);
   });
 }
 
-function paintNodes(n, g, NS) {
-  const x = Math.round(n._cx - NW / 2);
-  const y = Math.round(n._y);
-  const cls = n.class || 'node-unknown';
-  const fill = FILL[cls] || '#f8f9fb';
+function paintNodes(node, g, NS) {
+  if (!node) return;
+  const x      = Math.round(node._cx - NW/2);
+  const y      = Math.round(node._y);
+  const cls    = node.class || 'node-unknown';
+  const fill   = FILL[cls]   || '#f8f9fb';
   const stroke = STROKE[cls] || '#e4e8f0';
   const tcolor = TCOLOR[cls] || '#374151';
+  const collapsed = isCollapsed(node);
+  const hasKids   = node.children && node.children.length > 0;
 
-  /* bg shadow */
-  const sh = document.createElementNS(NS, 'rect');
-  sh.setAttribute('x', x + 2); sh.setAttribute('y', y + 3);
+  // Shadow
+  const sh = document.createElementNS(NS,'rect');
+  sh.setAttribute('x', x+2); sh.setAttribute('y', y+3);
   sh.setAttribute('width', NW); sh.setAttribute('height', NH);
-  sh.setAttribute('rx', RX);
-  sh.setAttribute('fill', 'rgba(0,0,0,0.045)');
+  sh.setAttribute('rx', RX); sh.setAttribute('fill','rgba(0,0,0,0.05)');
   g.appendChild(sh);
 
-  /* main rect */
-  const rect = document.createElementNS(NS, 'rect');
+  // Box
+  const rect = document.createElementNS(NS,'rect');
   rect.setAttribute('x', x); rect.setAttribute('y', y);
   rect.setAttribute('width', NW); rect.setAttribute('height', NH);
   rect.setAttribute('rx', RX);
-  rect.setAttribute('fill', fill);
-  rect.setAttribute('stroke', stroke);
+  rect.setAttribute('fill', collapsed ? '#f0f0f0' : fill);
+  rect.setAttribute('stroke', collapsed ? '#a0a0c0' : stroke);
   rect.setAttribute('stroke-width', '1.5');
-  rect.style.cursor = 'pointer';
+  rect.style.cursor = hasKids ? 'pointer' : 'default';
 
-  /* hover */
+  // Hover / tooltip
   rect.addEventListener('mouseenter', e => {
-    rect.setAttribute('filter', 'url(#node-glow)');
-    rect.setAttribute('stroke-width', '2.2');
-    if (n.detail) {
-      nodeTooltip.textContent = n.detail;
+    rect.setAttribute('filter','url(#node-glow)');
+    rect.setAttribute('stroke-width','2.2');
+    if (node.detail) {
+      let tip = node.detail;
+      if (hasKids) tip += collapsed ? '\n[click to expand]' : '\n[click to collapse]';
+      nodeTooltip.textContent = tip;
       nodeTooltip.style.display = 'block';
     }
     moveTooltip(e);
   });
   rect.addEventListener('mousemove', moveTooltip);
   rect.addEventListener('mouseleave', () => {
-    rect.setAttribute('filter', '');
-    rect.setAttribute('stroke-width', '1.5');
+    rect.setAttribute('filter','');
+    rect.setAttribute('stroke-width','1.5');
     nodeTooltip.style.display = 'none';
   });
+
+  // Click = toggle collapse (only nodes with children)
+  if (hasKids) {
+    rect.addEventListener('click', e => {
+      e.stopPropagation();
+      nodeTooltip.style.display = 'none';
+      if (collapsed) {
+        state.collapsedIds.delete(node._id);
+      } else {
+        state.collapsedIds.add(node._id);
+      }
+      renderTree();
+    });
+  }
   g.appendChild(rect);
 
-  /* label */
-  const label = n.label && n.label.length > 11 ? n.label.slice(0, 10) + '\u2026' : (n.label || '');
-  const txt = document.createElementNS(NS, 'text');
-  txt.setAttribute('x', n._cx);
-  txt.setAttribute('y', y + NH / 2 + 1);
-  txt.setAttribute('text-anchor', 'middle');
-  txt.setAttribute('dominant-baseline', 'middle');
-  txt.setAttribute('fill', tcolor);
-  txt.setAttribute('font-family', 'DM Mono, monospace');
-  txt.setAttribute('font-size', '12.5');
-  txt.setAttribute('font-weight', '500');
+  // Label
+  const rawLabel  = node.label && node.label.length > 11 ? node.label.slice(0,10)+'\u2026' : (node.label || '');
+  const dispLabel = collapsed && hasKids ? rawLabel + ' [+]' : rawLabel;
+
+  const txt = document.createElementNS(NS,'text');
+  txt.setAttribute('x', node._cx);
+  txt.setAttribute('y', y + NH/2 + 1);
+  txt.setAttribute('text-anchor','middle');
+  txt.setAttribute('dominant-baseline','middle');
+  txt.setAttribute('fill', collapsed ? '#6b7280' : tcolor);
+  txt.setAttribute('font-family','DM Mono, monospace');
+  txt.setAttribute('font-size','12.5');
+  txt.setAttribute('font-weight','500');
   txt.style.pointerEvents = 'none';
-  txt.style.userSelect = 'none';
-  txt.textContent = label;
+  txt.style.userSelect    = 'none';
+  txt.textContent = dispLabel;
   g.appendChild(txt);
 
-  /* type badge (small) */
-  const badge = document.createElementNS(NS, 'text');
-  badge.setAttribute('x', n._cx);
+  // Type badge
+  const badge = document.createElementNS(NS,'text');
+  badge.setAttribute('x', node._cx);
   badge.setAttribute('y', y + NH + 11);
-  badge.setAttribute('text-anchor', 'middle');
-  badge.setAttribute('dominant-baseline', 'middle');
-  badge.setAttribute('fill', '#9aa4b8');
-  badge.setAttribute('font-family', 'DM Sans, sans-serif');
-  badge.setAttribute('font-size', '9');
+  badge.setAttribute('text-anchor','middle');
+  badge.setAttribute('dominant-baseline','middle');
+  badge.setAttribute('fill','#9aa4b8');
+  badge.setAttribute('font-family','DM Sans, sans-serif');
+  badge.setAttribute('font-size','9');
   badge.style.pointerEvents = 'none';
-  badge.style.userSelect = 'none';
-  const typeLabel = (n.class || '').replace('node-', '');
-  badge.textContent = typeLabel;
+  badge.style.userSelect    = 'none';
+  badge.textContent = (node.class || '').replace('node-','');
   g.appendChild(badge);
 
-  if (n.children) n.children.forEach(c => paintNodes(c, g, NS));
+  // Recurse — skip children if collapsed
+  if (!collapsed && node.children) {
+    node.children.forEach(c => paintNodes(c, g, NS));
+  }
 }
 
 function moveTooltip(e) {
-  const x = Math.min(e.clientX + 14, window.innerWidth - 210);
-  const y = Math.max(e.clientY - 40, 4);
+  const x = Math.min(e.clientX + 14, window.innerWidth - 220);
+  const y = Math.max(e.clientY - 44, 4);
   nodeTooltip.style.left = `${x}px`;
-  nodeTooltip.style.top = `${y}px`;
+  nodeTooltip.style.top  = `${y}px`;
 }
 
-// ──────────────────────────────────────────
+// ── Tree control buttons ────────────────────────────────────────────────────
+/**
+ * Expand All: clears the collapsed set and re-renders.
+ * Every node that was folded will open up.
+ */
+btnExpandAll.addEventListener('click', () => {
+  if (!state.lastTree) return;
+  state.collapsedIds.clear();
+  renderTree();
+});
+
+/**
+ * Collapse All: adds every non-root node that has children to the collapsed set.
+ * The root stays visible; its children appear as collapsed boxes with [+].
+ */
+btnCollapseAll.addEventListener('click', () => {
+  if (!state.lastTree) return;
+  state.collapsedIds.clear();
+  // collapse from depth-1 down (keep root open, collapse its direct children)
+  function collapseKids(node) {
+    if (!node || !node.children) return;
+    node.children.forEach(child => {
+      if (child.children && child.children.length) {
+        state.collapsedIds.add(child._id);
+      }
+      collapseKids(child);
+    });
+  }
+  collapseKids(state.lastTree);
+  renderTree();
+});
+
+/**
+ * Center: resets both collapse state and scroll position, giving a fresh view.
+ */
+btnCenter.addEventListener('click', () => {
+  if (!state.lastTree) return;
+  state.collapsedIds.clear();
+  renderTree();
+  // scroll the container back to top-left
+  const scroller = treeContainer.querySelector('div');
+  if (scroller) { scroller.scrollLeft = 0; scroller.scrollTop = 0; }
+});
+
+// ──────────────────────────────────────────────────────
 // SYMBOL TABLE
-// ──────────────────────────────────────────
-const BUILTINS = { PI: '3.14159\u2026', E: '2.71828\u2026', TAU: '6.28318\u2026', INF: 'Infinity', NAN: 'NaN', null: '0' };
+// ──────────────────────────────────────────────────────
+const BUILTINS = {PI:'3.14159\u2026',E:'2.71828\u2026',TAU:'6.28318\u2026',INF:'Infinity',NAN:'NaN',null:'0'};
 
 function renderSymbolTable() {
   symbolArea.innerHTML = '';
-  const all = { ...BUILTINS, ...state.symbolTable };
+  const all  = {...BUILTINS, ...state.symbolTable};
   const keys = Object.keys(all);
-
   const grid = document.createElement('div');
   grid.className = 'sym-grid';
-
   keys.forEach((name, i) => {
     const isB = name in BUILTINS && !(name in state.symbolTable);
     const card = document.createElement('div');
@@ -367,28 +516,51 @@ function renderSymbolTable() {
       <div class="sym-type">${isB ? 'Built-in constant' : 'User variable'}</div>`;
     grid.appendChild(card);
   });
-
   symbolArea.appendChild(grid);
 }
 
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 // TABS
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 phaseTabs.addEventListener('click', e => {
   const btn = e.target.closest('.phase-tab');
   if (!btn) return;
-  document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.phase-tab').forEach(t  => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p  => p.classList.remove('active'));
   btn.classList.add('active');
   const panel = document.getElementById(`tab-${btn.dataset.tab}`);
   if (panel) panel.classList.add('active');
 });
 
-// ──────────────────────────────────────────
-// BUTTONS
-// ──────────────────────────────────────────
-btnRun.addEventListener('click', runCode);
+// ──────────────────────────────────────────────────────
+// REFERENCE — Run buttons
+// ──────────────────────────────────────────────────────
+document.querySelectorAll('.ref-run-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const row  = btn.closest('.ref-row');
+    const expr = row ? row.dataset.run : null;
+    if (!expr) return;
+    // Decode HTML entities in data-run (e.g. &amp; → &)
+    const tmp = document.createElement('textarea');
+    tmp.innerHTML = expr;
+    const decoded = tmp.value;
 
+    codeInput.value = decoded;
+    document.getElementById('playground').scrollIntoView({behavior:'smooth'});
+    // Switch to tokens tab
+    document.querySelectorAll('.phase-tab').forEach(t  => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p  => p.classList.remove('active'));
+    document.querySelector('.phase-tab[data-tab="tokens"]').classList.add('active');
+    document.getElementById('tab-tokens').classList.add('active');
+    setTimeout(runCode, 350);
+  });
+});
+
+// ──────────────────────────────────────────────────────
+// OTHER BUTTONS
+// ──────────────────────────────────────────────────────
+btnRun.addEventListener('click', runCode);
 codeInput.addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runCode(); }
 });
@@ -396,88 +568,76 @@ codeInput.addEventListener('keydown', e => {
 btnClear.addEventListener('click', () => {
   codeInput.value = '';
   codeInput.focus();
-  outputArea.innerHTML = `
-    <div class="output-placeholder">
-      <div class="placeholder-icon">\u2b21</div>
-      <p>Run an expression to see results</p>
-    </div>`;
+  outputArea.innerHTML = `<div class="output-placeholder"><div class="placeholder-icon">\u2b21</div><p>Run an expression to see results</p></div>`;
+  hideAISuggestion();
 });
 
 btnReset.addEventListener('click', async () => {
   if (!confirm('Reset session? All user-defined variables will be cleared.')) return;
-  await fetch('/api/reset', { method: 'POST' });
+  await fetch('/api/reset', {method:'POST'});
   state.symbolTable = {};
   renderSymbolTable();
-  outputArea.innerHTML = `
-    <div class="output-placeholder">
-      <div class="placeholder-icon">\u2b21</div>
-      <p>Session reset \u2014 variables cleared.</p>
-    </div>`;
+  outputArea.innerHTML = `<div class="output-placeholder"><div class="placeholder-icon">\u2b21</div><p>Session reset \u2014 variables cleared.</p></div>`;
+  hideAISuggestion();
 });
 
-btnExpandAll.addEventListener('click', () => { if (state.lastTree) renderTree(state.lastTree); });
-btnCollapseAll.addEventListener('click', () => { if (state.lastTree) renderTree(state.lastTree); });
-btnCenter.addEventListener('click', () => { if (state.lastTree) renderTree(state.lastTree); });
-
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 // EXAMPLE CHIPS
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 document.querySelectorAll('.example-chip').forEach(chip => {
   chip.addEventListener('click', () => {
     codeInput.value = chip.dataset.expr;
-    document.getElementById('playground').scrollIntoView({ behavior: 'smooth' });
-    /* auto-switch to tokens tab */
-    document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('playground').scrollIntoView({behavior:'smooth'});
+    document.querySelectorAll('.phase-tab').forEach(t  => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p  => p.classList.remove('active'));
     document.querySelector('.phase-tab[data-tab="tokens"]').classList.add('active');
     document.getElementById('tab-tokens').classList.add('active');
     setTimeout(runCode, 350);
   });
 });
 
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 // MOBILE NAV
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 mobileToggle.addEventListener('click', () => {
   document.querySelector('.nav-links').classList.toggle('open');
 });
-document.querySelectorAll('.nav-link').forEach(l => {
-  l.addEventListener('click', () => document.querySelector('.nav-links').classList.remove('open'));
-});
+document.querySelectorAll('.nav-link').forEach(l =>
+  l.addEventListener('click', () => document.querySelector('.nav-links').classList.remove('open'))
+);
 
-// ──────────────────────────────────────────
-// SCROLL ANIMATIONS for phase cards
-// ──────────────────────────────────────────
-const observer = new IntersectionObserver(entries => {
+// ──────────────────────────────────────────────────────
+// SCROLL ANIMATIONS
+// ──────────────────────────────────────────────────────
+const obs = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
       e.target.style.opacity = '1';
       e.target.style.transform = 'translateY(0)';
     }
   });
-}, { threshold: 0.1 });
+}, {threshold: 0.1});
 
 document.querySelectorAll('.phase-card, .ref-card').forEach(el => {
   el.style.opacity = '0';
   el.style.transform = 'translateY(18px)';
   el.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
-  observer.observe(el);
+  obs.observe(el);
 });
 
-// ──────────────────────────────────────────
-// ACTIVE NAV ON SCROLL
-// ──────────────────────────────────────────
-const sections = document.querySelectorAll('section[id]');
+// ──────────────────────────────────────────────────────
+// ACTIVE NAV LINK ON SCROLL
+// ──────────────────────────────────────────────────────
 window.addEventListener('scroll', () => {
   const y = window.scrollY + 80;
-  sections.forEach(sec => {
+  document.querySelectorAll('section[id]').forEach(sec => {
     const link = document.querySelector(`.nav-link[href="#${sec.id}"]`);
     if (link) link.classList.toggle('active-link', y >= sec.offsetTop && y < sec.offsetTop + sec.offsetHeight);
   });
-}, { passive: true });
+}, {passive: true});
 
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 // INIT
-// ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────
 renderSymbolTable();
 codeInput.focus();

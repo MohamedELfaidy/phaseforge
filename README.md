@@ -1,346 +1,262 @@
-# BASIC Programming Language Interpreter
+# PhaseForge — BASIC Language Compiler Web App
 
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-3.0%2B-lightgrey.svg)](https://flask.palletsprojects.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A powerful, feature-rich BASIC-like programming language interpreter implemented entirely in Python. Supports advanced mathematical operations, variables, and functional programming constructs.
+A full-stack Flask web application that walks every expression through all five compiler phases — **Lexical Analysis → Tokenization → Parsing → AST Construction → Interpretation** — with live, interactive visualizations powered by SVG and an AI-assisted error fixer.
 
-## ✨ Key Features
-
-### 🧮 **Advanced Mathematical Operations**
-- **Arithmetic**: `+ - * / ^ %` (Addition, Subtraction, Multiplication, Division, Exponentiation, Modulo)
-- **Trigonometric Functions**: 
-  - Radians: `sin(), cos(), tan(), asin(), acos(), atan()`
-  - Degrees: `sind(), cosd(), tand(), asind(), acosd(), atand()`
-  - Hyperbolic: `sinh(), cosh(), tanh()`
-- **Mathematical Functions**: `exp(), ln(), log()`
-- **Special Operations**: `$` (Square Root), `!` (Factorial), `\` (Floor Division)
-
-### 💾 **Variables & Memory**
-- Variable declaration: `VAR x = 10`
-- Variable reassignment and usage in expressions
-- Built-in constants: `PI`, `E`, `TAU`, `INF`, `NAN`
-
-### ⚙️ **Bitwise & Logical Operations**
-- **Bitwise**: `&` (AND), `|` (OR), `~` (NOT), `^` (XOR), `'` (XNOR)
-- **Shift Operations**: `<<` (Left Shift), `>>` (Right Shift), `>>>` (Unsigned Right Shift)
-
-### 📊 **Comparison & Relational Operations**
-- **Equality**: `#` (Equivalent), `@` (Not Equivalent)
-- **Relational**: `>` (Greater Than), `<` (Less Than), `{` (Less Than or Equal), `}` (Greater Than or Equal)
-- **Special Comparisons**: `;` (GCD), `:` (LCM), `?` (Compare with details)
-
-## 🏗️ Project Architecture
-
-```
-basic_language/
-├── src/                    # Core Language Package
-│   ├── core/                      # Foundation Components
-│   │   ├── constants.py           # Language constants and definitions
-│   │   ├── errors.py             # Error handling and exceptions
-│   │   ├── position.py           # Source code position tracking
-│   │   └── tokens.py             # Token definitions and types
-│   ├── lexer/                     # Lexical Analysis
-│   │   ├── __init__.py
-│   │   └── lexer.py              # Tokenizer/Scanner
-│   ├── parser/                    # Syntax Analysis
-│   │   ├── __init__.py
-│   │   ├── nodes.py              # Abstract Syntax Tree nodes
-│   │   ├── parse_result.py       # Parser result handling
-│   │   └── parser.py             # Recursive descent parser
-│   ├── interpreter/               # Runtime Execution
-│   │   ├── __init__.py
-│   │   ├── context.py            # Execution context and scope
-│   │   ├── interpreter.py        # AST interpreter
-│   │   ├── runtime_result.py     # Runtime result handling
-│   │   └── values.py             # Value types and operations
-│   ├── builtins/                  # Built-in Features
-│   │   ├── __init__.py
-│   │   └── symbols.py            # Predefined symbols and constants
-│   ├── utils/                     # Utilities
-│   │   ├── __init__.py
-│   │   └── strings_with_arrows.py # Error visualization
-│   └── runner.py                  # Main execution entry point
-├── tests/                         # Test Suite
-│   ├── __init__.py
-│   └── test_basic.py             # Comprehensive test cases
-├── shell.py                       # Interactive REPL Shell
-└── README.md                      # Documentation
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.8 or higher
-- No additional dependencies required
-
-### Installation
-
-**Option 1: Direct Clone (Recommended)**
-```bash
-git clone <repository-url>
-cd basic_language
-```
-
-**Option 2: Manual Setup**
-1. Create the project directory structure
-2. Copy all source files to their respective locations
-3. Create empty `__init__.py` files in each package directory
-
-### Running the Interpreter
-
-**Interactive Shell (REPL):**
-```bash
-python shell.py
-```
-
-**Run a Script File:**
-```bash
-python shell.py < your_script.bas
-```
-
-**Example Session:**
-```bash
-$ python shell.py
-BASIC Language Interpreter v0.1.0
-Type 'exit' or 'quit' to exit
-==================================================
-basic > 2 + 3 * 4
-14
-basic > VAR radius = 5
-5
-basic > PI * radius ^ 2
-78.53981633974483
-basic > sind(30) + cosd(60)
-1.0
-basic > exit
-Goodbye!
-```
-
-## 📖 Language Reference
-
-### Syntax Examples
-
-**Basic Arithmetic:**
-```basic
-2 + 3 * 4          # 14
-(2 + 3) * 4        # 20
-10 ^ 2             # 100 (exponentiation)
-10 % 3             # 1 (modulo)
-5!                 # 120 (factorial)
-$ 16               # 4.0 (square root)
-10 \ 3             # 3 (floor division)
-```
-
-**Trigonometric Functions:**
-```basic
-sin(PI/2)          # 1.0 (radians)
-cos(0)             # 1.0
-tan(PI/4)          # 0.9999999999999999
-sind(90)           # 1.0 (degrees)
-cosd(0)            # 1.0
-tand(45)           # 1.0
-```
-
-**Variables and Expressions:**
-```basic
-VAR x = 10
-VAR y = x * 2 + 5
-VAR z = sin(y) + exp(2)
-```
-
-**Bitwise Operations:**
-```basic
-5 & 3              # 1 (AND)
-5 | 3              # 7 (OR)
-5 ^ 3              # 6 (XOR)
-~5                 # -6 (NOT)
-5 << 2             # 20 (Left shift)
-16 >> 2            # 4 (Right shift)
-```
-
-**Comparison Operations:**
-```basic
-5 # 5              # True (Equivalent)
-5 @ 3              # True (Not Equivalent)
-5 > 3              # True
-3 < 5              # True
-5 { 5              # True (Less than or equal)
-5 } 5              # True (Greater than or equal)
-12 ; 8             # 4 (GCD)
-12 : 8             # 24 (LCM)
-5 ? 3              # "the left side is bigger by 2"
-```
-
-### Built-in Constants
-
-| Constant | Value             | Description                                          |
-|----------|-------------------|------------------------------------------------------|
-| `PI`     | 3.141592653589793 | π, ratio of circle's circumference to its diameter   |
-| `E`      | 2.718281828459045 | Euler's number, base of natural logarithms           |
-| `TAU`    | 6.283185307179586 | τ, 2π, ratio of circle's circumference to its radius |
-| `INF`    | inf               | Positive infinity                                    |
-| `NAN`    | nan               | Not a Number                                         |
-| `null`   | 0                 | Null/zero value                                      |
-
-## 🧪 Testing
-
-Run the comprehensive test suite:
-
-```bash
-python -m tests.test_basic
-```
-
-**Expected Output:**
-```
-============================================================
-Running BASIC Language Tests
-============================================================
-✓ 2 + 3 * 4 = 14
-✓ (2 + 3) * 4 = 20
-✓ sind(90) = 1.0
-✓ cosd(0) = 1.0
-✓ exp(1) = 2.718281828459045
-✓ ln(2.718281828459045) = 1.0
-✓ log(100) = 2.0
-✓ VAR x = 10 = 10
-✓ x * 2 = 20
-✓ 5 << 2 = 20
-✓ 16 >> 2 = 4
-✓ sin(3.141592653589793/2) = 1.0
-✓ cos(0) = 1.0
-✓ tand(45) = 1.0
-============================================================
-Total: 14, Passed: 14, Failed: 0
-✅ All tests passed! 🎉
-============================================================
-```
-
-## 🔧 Development
-
-### Adding New Features
-
-1. **New Token Type:**
-   - Add to `basic_lang/core/tokens.py`
-   - Update lexer in `basic_lang/lexer/lexer.py`
-
-2. **New Mathematical Function:**
-   - Add method to `Number` class in `basic_lang/interpreter/values.py`
-   - Update `_create_function_map()` in `basic_lang/interpreter/interpreter.py`
-
-3. **New Operator:**
-   - Add token type
-   - Update parser precedence in `basic_lang/parser/parser.py`
-   - Implement operation in `Number` class
-
-### Code Organization
-
-The project follows SOLID principles:
-
-- **Single Responsibility**: Each class/module has one clear purpose
-- **Open/Closed**: Easy to extend without modifying existing code
-- **Liskov Substitution**: Proper inheritance and interface implementation
-- **Interface Segregation**: Small, focused interfaces
-- **Dependency Inversion**: High-level modules depend on abstractions
-
-## 📊 Performance Notes
-
-- **Memory**: Efficient AST representation with position tracking
-- **Error Handling**: Detailed error messages with source code visualization
-- **Extensibility**: Modular design allows easy addition of new features
-- **Accuracy**: Uses Python's `math` library for precise calculations
-
-## 🐛 Error Examples
-
-**Syntax Error:**
-```basic
-basic > 2 + * 3
-Invalid Syntax: Unexpected token
-File <stdin>, line 1
-
-2 + * 3
-    ^
-```
-
-**Runtime Error:**
-```basic
-basic > 10 / 0
-Runtime Error: Division by zero
-File <stdin>, line 1
-
-10 / 0
-    ^
-```
-
-**Undefined Variable:**
-```basic
-basic > unknown_var
-Runtime Error: 'unknown_var' is not defined
-File <stdin>, line 1
-
-unknown_var
-^
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow PEP 8 style guidelines
-- Write tests for new features
-- Update documentation
-- Use meaningful commit messages
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2025 BASIC Language Interpreter Project
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-## 🙏 Acknowledgments
-
-- Inspired by traditional BASIC programming languages
-- Uses Python's robust mathematical libraries
-- Built with clean architecture principles
-- Error visualization inspired by modern compilers
-
-## 📞 Support
-
-For questions, issues, or feature requests:
-1. Check the [Examples](#-language-reference) section
-2. Review [Error Examples](#-error-examples)
-3. Open an issue in the repository
+**University:** Minia University · Faculty of Computers & Information  
+**Course:** Compiler Design 2025–2026  
+**Instructor:** Dr. Moussa Elkedr  
+**Teaching Assistant:** Eng. Mina Essam  
 
 ---
 
-**Happy Coding with BASIC!** 🚀
+## ✨ Features
 
-*"Simplicity is the ultimate sophistication." - Leonardo da Vinci*
+### 🔬 Five Live Compiler Phases
+Every expression is processed visibly through:
+1. **Lexical Analysis** — character-by-character source scanning
+2. **Tokenization** — colour-coded token stream with a detailed breakdown table
+3. **Parsing** — recursive-descent grammar analysis
+4. **AST Construction** — interactive SVG parse tree with click-to-collapse nodes
+5. **Interpretation** — full evaluation with a scoped symbol table
+
+### 🌳 Interactive Parse Tree
+- SVG-rendered, auto-laid-out tree
+- **Click any node** to collapse/expand its subtree
+- **Collapse All** — folds all non-root children so only direct children are visible as `[+]` boxes
+- **Expand All** — opens every node in the tree
+- **Center** — resets collapse state and redraws from scratch
+- **Partial tree** on syntax errors — shows as much of the tree as could be parsed, with a warning banner
+- Node tooltips on hover showing type and operation detail
+
+### ✦ AI-Assisted Error Suggestions
+When an expression fails, PhaseForge automatically calls the **Groq LLaMA 3.3 70B** model to suggest a corrected expression. A banner appears below the editor with:
+- The AI-suggested fix displayed inline
+- A one-sentence explanation of what was wrong
+- **Apply Fix** button — pastes the suggestion into the editor in one click
+
+### 📖 Interactive Language Reference
+Every entry in the Language Reference section has a **▶ Run** button. Clicking it:
+- Pastes the example expression directly into the playground input
+- Scrolls to the playground
+- Automatically runs it
+
+### 🛡 Friendly Python Error Messages
+Python internal errors are translated into readable messages:
+- `OverflowError / int too large to convert` → *"Result Too Large — try smaller numbers or add a decimal"*
+- `ZeroDivisionError` → *"Division by Zero"*
+- `math domain error` → *"Math Domain Error"*
+- `RecursionError` → *"Stack Overflow"*
+- All others: cleaned up and shown without a raw Python traceback
+
+### 💾 Session Variables
+Variables declared with `VAR` persist across expressions within the same browser session. The Symbol Table tab shows all built-in constants and user-defined variables side by side.
+
+---
+
+## 🧮 Language Reference
+
+### Arithmetic
+| Operator | Operation | Example |
+|---|---|---|
+| `+` | Addition | `2 + 3` |
+| `-` | Subtraction | `5 - 2` |
+| `*` | Multiplication | `3 * 4` |
+| `/` | Division | `10 / 4` |
+| `**` | Power | `2 ** 8` |
+| `%` | Modulo | `10 % 3` |
+| `\` | Floor division | `10 \ 3` |
+| `$` | Nth root | `2 $ 16` |
+| `!` | Factorial | `5!` |
+
+### Bitwise
+`&` AND · `|` OR · `^` XOR · `"` XNOR · `~` NOT · `<<` Left Shift · `>>` Right Shift · `>>>` Unsigned Right Shift
+
+### Comparison
+`#` Equal · `@` Not Equal · `>` Greater · `<` Less · `}` ≥ · `{` ≤ · `;` GCD · `:` LCM · `?` Compare (returns text)
+
+### Functions
+`sin cos tan` (rad) · `sind cosd tand` (deg) · `asin acos atan` · `asind acosd atand` · `sinh cosh tanh` · `exp ln log`
+
+### Built-in Constants
+`PI` · `E` · `TAU` · `INF` · `NAN` · `null`
+
+### Variables
+```basic
+VAR x = 10
+VAR y = x * 2 + sind(30)
+```
+
+---
+
+## 🏗 Project Structure
+
+```
+phaseforge/
+│
+├── app.py                      ← Flask app (routes, API, partial-tree, AI suggestion)
+├── requirements.txt            ← flask, gunicorn
+│
+├── src/
+│   ├── runner.py               ← Orchestrates all 5 phases; per-session symbol tables
+│   ├── core/
+│   │   ├── constants.py        ← DIGITS, LETTERS, KEYWORDS
+│   │   ├── tokens.py           ← Token class + all TT_* constants
+│   │   ├── position.py         ← Source position tracker
+│   │   └── errors.py           ← Error types
+│   ├── lexer/
+│   │   └── lexer.py            ← Lexical analyser (Phase 1 & 2)
+│   ├── parser/
+│   │   ├── nodes.py            ← AST node classes with .to_dict()
+│   │   ├── parse_result.py     ← ParseResult helper
+│   │   └── parser.py           ← Recursive descent parser (Phase 3 & 4)
+│   ├── interpreter/
+│   │   ├── interpreter.py      ← AST visitor/evaluator (Phase 5)
+│   │   ├── values.py           ← Number class — all operations
+│   │   ├── context.py          ← Context + SymbolTable
+│   │   └── runtime_result.py   ← RTResult wrapper
+│   └── builtins/
+│       └── symbols.py          ← Global symbol table (PI, E, TAU, INF, NAN, null)
+│
+├── templates/
+│   └── index.html              ← Full SPA (hero, playground, reference, footer)
+│
+├── static/
+│   ├── css/style.css           ← Complete design system — light theme
+│   ├── js/main.js              ← SVG tree, collapse/expand, AI banner, ref Run buttons
+│   └── img/
+│       ├── favicon.svg / .ico / -32.png / -192.png
+│       └── team/               ← Drop team photos here
+│
+└── deploy/
+    ├── nginx.conf              ← Nginx config (HTTP + commented HTTPS block)
+    ├── phaseforge.service      ← systemd unit file for Gunicorn
+    └── deploy.sh               ← One-shot Ubuntu deployment script
+```
+
+---
+
+## 🚀 Quick Start (Local)
+
+```bash
+# Clone / unzip the project
+cd phaseforge
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run
+python app.py
+# → Open http://localhost:5000
+```
+
+---
+
+## 🌐 Deployment (Ubuntu VPS)
+
+### Automated — one script
+
+```bash
+# On your VPS
+cd /path/to/phaseforge
+sudo bash deploy/deploy.sh
+```
+
+The script installs Nginx, creates a Python virtualenv, registers a systemd service, configures Nginx as a reverse proxy, and optionally runs Certbot for HTTPS.
+
+### Manual steps
+
+```bash
+# 1. System packages
+sudo apt update && sudo apt install -y python3 python3-venv nginx certbot python3-certbot-nginx
+
+# 2. App directory
+sudo cp -r . /var/www/phaseforge
+sudo chown -R www-data:www-data /var/www/phaseforge
+sudo mkdir -p /var/log/phaseforge && sudo chown www-data: /var/log/phaseforge
+
+# 3. Python venv
+sudo -u www-data python3 -m venv /var/www/phaseforge/venv
+sudo -u www-data /var/www/phaseforge/venv/bin/pip install -r /var/www/phaseforge/requirements.txt
+
+# 4. Nginx
+sudo cp deploy/nginx.conf /etc/nginx/sites-available/phaseforge
+sudo ln -sf /etc/nginx/sites-available/phaseforge /etc/nginx/sites-enabled/phaseforge
+sudo nginx -t && sudo systemctl reload nginx
+
+# 5. Systemd
+sudo cp deploy/phaseforge.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now phaseforge
+
+# 6. SSL (after DNS is live)
+sudo certbot --nginx -d phaseforge.dpdns.org -d www.phaseforge.dpdns.org
+```
+
+### Useful Commands
+
+| Action | Command |
+|---|---|
+| Service status | `sudo systemctl status phaseforge` |
+| Restart service | `sudo systemctl restart phaseforge` |
+| Live logs | `sudo journalctl -u phaseforge -f` |
+| Reload Nginx | `sudo nginx -t && sudo systemctl reload nginx` |
+| Renew SSL | `sudo certbot renew --dry-run` |
+
+---
+
+## 🔌 API Reference
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| `POST` | `/api/run` | `{"code":"..."}` | result, tokens, tree, error, tree_partial |
+| `POST` | `/api/suggest` | `{"code":"...","error":"..."}` | AI-suggested fix + explanation |
+| `POST` | `/api/tokenize` | `{"code":"..."}` | token list |
+| `POST` | `/api/parse` | `{"code":"..."}` | parse tree (partial if needed) |
+| `POST` | `/api/reset` | — | clears session variables |
+
+---
+
+## 🧪 Testing
+
+```bash
+python3 -c "
+from src.runner import run
+tests = [
+    ('2 + 3 * 4', '14'),
+    ('sin(PI / 2)', '1.0'),
+    ('5!', '120'),
+    ('12 ; 8', '4'),
+    ('log(100)', '2.0'),
+]
+for code, expected in tests:
+    val, err, _, _ = run('<test>', code)
+    result = str(val.value) if val else None
+    status = '✓' if result == expected else '✗'
+    print(f'  {status} {code!r:25} → {result}')
+"
+```
+
+---
+
+## 🤝 Team
+
+| Name | LinkedIn |
+|---|---|
+| Mohamed Sayed | [linkedin.com/in/mohamed-sayed-60ba8b264](https://www.linkedin.com/in/mohamed-sayed-60ba8b264) |
+| Ammar Yasser  | [linkedin.com/in/ammar-yasser-83537a267](https://www.linkedin.com/in/ammar-yasser-83537a267)  |
+| Beshoy Farouk | [linkedin.com/in/beshoy-farouk](https://www.linkedin.com/in/beshoy-farouk)                   |
+| Hussien Mohamed | [linkedin.com/in/hussien-mohammed-426947257](https://www.linkedin.com/in/hussien-mohammed-426947257) |
+| Michael Hany  | [linkedin.com/in/michael-hany-572034262](https://www.linkedin.com/in/michael-hany-572034262)  |
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+*"Simplicity is the ultimate sophistication." — Leonardo da Vinci*
