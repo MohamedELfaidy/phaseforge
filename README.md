@@ -7,7 +7,7 @@
 A full-stack Flask web application that walks every expression through all five compiler phases — **Lexical Analysis → Tokenization → Parsing → AST Construction → Interpretation** — with live, interactive visualizations powered by SVG and an AI-assisted error fixer.
 
 **University:** Minia University · Faculty of Computers & Information  
-**Course:** Compiler Design 2025–2026  
+**Course:** Compiler Design 2025-2026  
 **Instructor:** Dr. Moussa Elkedr  
 **Teaching Assistant:** Eng. Mina Essam
 
@@ -16,6 +16,7 @@ A full-stack Flask web application that walks every expression through all five 
 ## Access the application from [here](https://phaseforge.dpdns.org)
 
 ---
+
 ## ✨ Features
 
 ### 🔬 Five Live Compiler Phases
