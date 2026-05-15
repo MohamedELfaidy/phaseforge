@@ -1529,3 +1529,24 @@ body {
   opacity: 0.6;
   font-style: italic;
 }
+
+/* AI Hero Badge */
+.ai-hero-badge {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  margin-top: 0.75rem;
+  margin-left: 0;
+  display: inline-flex;
+  align-items: center;
+}
+.ai-sparkle-inline {
+  margin-right: 0.4rem;
+  font-weight: bold;
+  filter: drop-shadow(0 0 5px var(--accent));
+  animation: pulseSparkle 2s infinite ease-in-out;
+}
+@keyframes pulseSparkle {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
